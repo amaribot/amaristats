@@ -1,3 +1,9 @@
 <html>
-    <body><%- JSON.stringify(user) %></body>
+    <head>
+        <%- include("partials/head", {title: null, desc: null }) %>
+    </head>
+    <body>
+        <%- include("stats", {user}) %> 
+        <%- include("partials/footer") %>
+    </body>
 </html>

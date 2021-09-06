@@ -54,7 +54,7 @@ const checkAuth = (req, res, next) => {
     res.redirect("/login?return=" + encodeURI(req.path))
 }
 
-app.get("/", (req, res) => {
+app.get("/", checkAuth, (req, res) => {
     let pass = { user: null, player: null, path: req.path }
     if (req.user) {
         pass.user = req.user
