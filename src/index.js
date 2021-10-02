@@ -6,6 +6,9 @@ const Strategy = require("passport-discord").Strategy
 const passport = require("passport")
 const config = require("../config")
 
+const amaribotjs = require("amaribot.js")
+const AmariBot = new amaribotjs.AmariBot(process.env.AMARIBOT, { debug: true })
+
 app.use(
     require("express-session")({
         secret: process.env.SESSION_SECRET,
@@ -54,12 +57,26 @@ const checkAuth = (req, res, next) => {
     res.redirect("/login?return=" + encodeURI(req.path))
 }
 
-app.get("/", checkAuth, (req, res) => {
-    let pass = { user: null, player: null, path: req.path }
-    if (req.user) {
-        pass.user = req.user
+app.get("/", checkAuth, async (req, res) => {
+    let guildIds = req.user.guilds.map((x) => x.id)
+    let stats = {}
+    let count = 1
+    for await (x of guildIds) {
+        console.log(count)
+        if(count == 50) {
+            sleep(60000)
+            count = 0
+        }
+        if (count < 50) {
+            let thisStat = {}
+            thisStat.user = await AmariBot.getUserLevel(x, req.user.id).catch((x) => (thisStat.user = {}))
+            console.log(x, thisStat.user)
+            //thisStat.position = await AmariBot.getLeaderboardPosition(x, req.user.id)
+            stats[x] = thisStat
+        }
+        count++
     }
-    res.render(__dirname + "/views/index.ejs", pass)
+    res.render(__dirname + "/views/index.ejs", { user: req.user, stats })
 })
 
 app.get("/login", (req, res) => {
@@ -92,3 +109,7 @@ app.get("/info", checkAuth, (req, res) => {
 const listener = app.listen(20202, function () {
     console.log("AmariStats is online, using port " + listener.address().port)
 })
+
+const sleep = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
